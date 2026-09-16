@@ -1,0 +1,263 @@
+{
+  "info": {
+    "name": "Study Materials API (lab21)",
+    "description": "CRUD для учебных материалов: лекции, презентации, книги",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "host",
+      "value": "http://localhost:3000"
+    },
+    {
+      "key": "baseUrl",
+      "value": "{{host}}/api/materials"
+    }
+  ],
+  "item": [
+    {
+      "name": "1. GET — список всех материалов",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}"
+        }
+      }
+    },
+    {
+      "name": "2. GET — фильтр по типу (query string)",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}?type=book"
+        }
+      }
+    },
+    {
+      "name": "3. GET — поиск по тексту",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}?search=express"
+        }
+      }
+    },
+    {
+      "name": "4. GET — неверный тип в фильтре (400)",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}?type=video"
+        }
+      }
+    },
+    {
+      "name": "5. GET — материал по id",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/1"
+        }
+      }
+    },
+    {
+      "name": "6. GET — несуществующий id (404)",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/999"
+        }
+      }
+    },
+    {
+      "name": "7. GET — некорректный id (400)",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/abc"
+        }
+      }
+    },
+    {
+      "name": "8. POST — создание материала (201)",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}"
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"title\": \"Лекция 2. Express.js\",\n  \"type\": \"lecture\",\n  \"subject\": \"Интернет-технологии\",\n  \"author\": \"Петров П.П.\",\n  \"description\": \"Создание сервера, маршруты, middleware.\",\n  \"fileUrl\": \"https://example.com/files/lecture-2-express.pdf\",\n  \"tags\": [\"express\", \"node.js\"]\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "9. POST — невалидные данные (400)",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}"
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"title\": \"\",\n  \"type\": \"video\",\n  \"fileUrl\": \"not-a-url\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "10. POST — некорректный JSON (400)",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}"
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{ \"title\": \"Без закрывающей скобки\"",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "11. PUT — полное обновление (200)",
+      "request": {
+        "method": "PUT",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/4"
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"title\": \"Лекция 2. Express.js (обновлено)\",\n  \"type\": \"lecture\",\n  \"subject\": \"Интернет-технологии\",\n  \"author\": \"Петров П.П.\",\n  \"description\": \"Добавлены примеры обработки ошибок.\",\n  \"fileUrl\": \"https://example.com/files/lecture-2-express-v2.pdf\",\n  \"tags\": [\"express\", \"node.js\", \"errors\"]\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "12. PUT — неполные данные (400)",
+      "request": {
+        "method": "PUT",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/4"
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"title\": \"Только заголовок\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "13. PUT — несуществующий id (404)",
+      "request": {
+        "method": "PUT",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/999"
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"title\": \"Несуществующий материал\",\n  \"type\": \"book\",\n  \"subject\": \"Программирование\",\n  \"author\": \"Автор\",\n  \"fileUrl\": \"https://example.com/book.pdf\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "14. DELETE — удаление (204)",
+      "request": {
+        "method": "DELETE",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/4"
+        }
+      }
+    },
+    {
+      "name": "15. DELETE — повторное удаление (404)",
+      "request": {
+        "method": "DELETE",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/4"
+        }
+      }
+    },
+    {
+      "name": "16. Неизвестный маршрут (404)",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{host}}/api/unknown"
+        }
+      }
+    }
+  ]
+}

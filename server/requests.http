@@ -1,0 +1,95 @@
+@baseUrl = http://localhost:3000/api/materials
+
+### 1. GET — список всех материалов
+GET {{baseUrl}}
+
+### 2. GET — фильтр по типу (query string)
+GET {{baseUrl}}?type=book
+
+### 3. GET — поиск по тексту
+GET {{baseUrl}}?search=express
+
+### 4. GET — неверный тип в фильтре (400)
+GET {{baseUrl}}?type=video
+
+### 5. GET — материал по id
+GET {{baseUrl}}/1
+
+### 6. GET — несуществующий id (404)
+GET {{baseUrl}}/999
+
+### 7. GET — некорректный id (400)
+GET {{baseUrl}}/abc
+
+### 8. POST — создание материала (201)
+POST {{baseUrl}}
+Content-Type: application/json
+
+{
+  "title": "Лекция 2. Express.js",
+  "type": "lecture",
+  "subject": "Интернет-технологии",
+  "author": "Петров П.П.",
+  "description": "Создание сервера, маршруты, middleware.",
+  "fileUrl": "https://example.com/files/lecture-2-express.pdf",
+  "tags": ["express", "node.js"]
+}
+
+### 9. POST — невалидные данные (400)
+POST {{baseUrl}}
+Content-Type: application/json
+
+{
+  "title": "",
+  "type": "video",
+  "fileUrl": "not-a-url"
+}
+
+### 10. POST — некорректный JSON (400)
+POST {{baseUrl}}
+Content-Type: application/json
+
+{ "title": "Без закрывающей скобки"
+
+### 11. PUT — полное обновление (200)
+PUT {{baseUrl}}/4
+Content-Type: application/json
+
+{
+  "title": "Лекция 2. Express.js (обновлено)",
+  "type": "lecture",
+  "subject": "Интернет-технологии",
+  "author": "Петров П.П.",
+  "description": "Добавлены примеры обработки ошибок.",
+  "fileUrl": "https://example.com/files/lecture-2-express-v2.pdf",
+  "tags": ["express", "node.js", "errors"]
+}
+
+### 12. PUT — неполные данные (400)
+PUT {{baseUrl}}/4
+Content-Type: application/json
+
+{
+  "title": "Только заголовок"
+}
+
+### 13. PUT — несуществующий id (404)
+PUT {{baseUrl}}/999
+Content-Type: application/json
+
+{
+  "title": "Несуществующий материал",
+  "type": "book",
+  "subject": "Программирование",
+  "author": "Автор",
+  "fileUrl": "https://example.com/book.pdf"
+}
+
+### 14. DELETE — удаление (204)
+DELETE {{baseUrl}}/4
+
+### 15. DELETE — повторное удаление (404)
+DELETE {{baseUrl}}/4
+
+### 16. Неизвестный маршрут (404)
+GET http://localhost:3000/api/unknown
