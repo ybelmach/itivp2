@@ -6,12 +6,9 @@
   },
   "variable": [
     {
-      "key": "host",
-      "value": "http://localhost:3000"
-    },
-    {
       "key": "baseUrl",
-      "value": "{{host}}/api/materials"
+      "value": "http://localhost:3000",
+      "type": "string"
     }
   ],
   "item": [
@@ -21,7 +18,14 @@
         "method": "GET",
         "header": [],
         "url": {
-          "raw": "{{baseUrl}}"
+          "raw": "{{baseUrl}}/api/materials",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "materials"
+          ]
         }
       }
     },
@@ -31,7 +35,20 @@
         "method": "GET",
         "header": [],
         "url": {
-          "raw": "{{baseUrl}}?type=book"
+          "raw": "{{baseUrl}}/api/materials?type=book",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "materials"
+          ],
+          "query": [
+            {
+              "key": "type",
+              "value": "book"
+            }
+          ]
         }
       }
     },
@@ -41,7 +58,20 @@
         "method": "GET",
         "header": [],
         "url": {
-          "raw": "{{baseUrl}}?search=express"
+          "raw": "{{baseUrl}}/api/materials?search=express",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "materials"
+          ],
+          "query": [
+            {
+              "key": "search",
+              "value": "express"
+            }
+          ]
         }
       }
     },
@@ -51,7 +81,20 @@
         "method": "GET",
         "header": [],
         "url": {
-          "raw": "{{baseUrl}}?type=video"
+          "raw": "{{baseUrl}}/api/materials?type=video",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "materials"
+          ],
+          "query": [
+            {
+              "key": "type",
+              "value": "video"
+            }
+          ]
         }
       }
     },
@@ -61,7 +104,15 @@
         "method": "GET",
         "header": [],
         "url": {
-          "raw": "{{baseUrl}}/1"
+          "raw": "{{baseUrl}}/api/materials/1",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "materials",
+            "1"
+          ]
         }
       }
     },
@@ -71,7 +122,15 @@
         "method": "GET",
         "header": [],
         "url": {
-          "raw": "{{baseUrl}}/999"
+          "raw": "{{baseUrl}}/api/materials/999",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "materials",
+            "999"
+          ]
         }
       }
     },
@@ -81,7 +140,15 @@
         "method": "GET",
         "header": [],
         "url": {
-          "raw": "{{baseUrl}}/abc"
+          "raw": "{{baseUrl}}/api/materials/abc",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "materials",
+            "abc"
+          ]
         }
       }
     },
@@ -96,7 +163,14 @@
           }
         ],
         "url": {
-          "raw": "{{baseUrl}}"
+          "raw": "{{baseUrl}}/api/materials",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "materials"
+          ]
         },
         "body": {
           "mode": "raw",
@@ -120,7 +194,14 @@
           }
         ],
         "url": {
-          "raw": "{{baseUrl}}"
+          "raw": "{{baseUrl}}/api/materials",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "materials"
+          ]
         },
         "body": {
           "mode": "raw",
@@ -144,7 +225,14 @@
           }
         ],
         "url": {
-          "raw": "{{baseUrl}}"
+          "raw": "{{baseUrl}}/api/materials",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "materials"
+          ]
         },
         "body": {
           "mode": "raw",
@@ -168,7 +256,15 @@
           }
         ],
         "url": {
-          "raw": "{{baseUrl}}/4"
+          "raw": "{{baseUrl}}/api/materials/4",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "materials",
+            "4"
+          ]
         },
         "body": {
           "mode": "raw",
@@ -192,7 +288,15 @@
           }
         ],
         "url": {
-          "raw": "{{baseUrl}}/4"
+          "raw": "{{baseUrl}}/api/materials/4",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "materials",
+            "4"
+          ]
         },
         "body": {
           "mode": "raw",
@@ -216,7 +320,15 @@
           }
         ],
         "url": {
-          "raw": "{{baseUrl}}/999"
+          "raw": "{{baseUrl}}/api/materials/999",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "materials",
+            "999"
+          ]
         },
         "body": {
           "mode": "raw",
@@ -235,7 +347,15 @@
         "method": "DELETE",
         "header": [],
         "url": {
-          "raw": "{{baseUrl}}/4"
+          "raw": "{{baseUrl}}/api/materials/4",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "materials",
+            "4"
+          ]
         }
       }
     },
@@ -245,7 +365,15 @@
         "method": "DELETE",
         "header": [],
         "url": {
-          "raw": "{{baseUrl}}/4"
+          "raw": "{{baseUrl}}/api/materials/4",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "materials",
+            "4"
+          ]
         }
       }
     },
@@ -255,7 +383,14 @@
         "method": "GET",
         "header": [],
         "url": {
-          "raw": "{{host}}/api/unknown"
+          "raw": "{{baseUrl}}/api/unknown",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "unknown"
+          ]
         }
       }
     }
