@@ -34,7 +34,7 @@ npm run dev             # http://localhost:3000
 
 | Мера | Где в коде |
 |---|---|
-| Хеширование паролей bcrypt (12 раундов), проверка сложности пароля | `controllers/auth.controller.js`, `validators/auth.validators.js` |
+| Хеширование паролей bcrypt (12 раундов), проверка сложности пароля (буквы разного регистра, цифра, спецсимвол) | `controllers/auth.controller.js`, `validators/auth.validators.js` |
 | JWT access-токен (15 мин) + refresh-токен в httpOnly cookie с ротацией | `controllers/auth.controller.js` |
 | Роли и `roleGuard(requiredRole)`, проверка владельца записи | `middleware/auth.js`, `controllers/materials.controller.js` |
 | Блокировка на 15 минут после 5 неудачных входов | `controllers/auth.controller.js` |
