@@ -11,6 +11,9 @@ function errorHandler(err, req, res, next) {
   if (err.type === 'entity.parse.failed') {
     status = 400;
     message = 'Некорректный JSON в теле запроса';
+  } else if (err.type === 'entity.too.large') {
+    status = 413;
+    message = 'Тело запроса слишком большое (максимум 10 КБ)';
   }
 
   // Ошибки ограничений БД, не пойманные валидацией на входе
@@ -24,7 +27,8 @@ function errorHandler(err, req, res, next) {
     details = err.errors.map((e) => `${e.path}: ${e.message}`);
   }
 
-  // Детали внутренних ошибок пишутся в лог, но не отдаются клиенту
+  // Детали внутренних ошибок пишутся в лог, но не отдаются клиенту:
+  // ни текст исключения, ни стек, ни SQL
   if (status >= 500) {
     console.error(err);
     message = 'Внутренняя ошибка сервера';

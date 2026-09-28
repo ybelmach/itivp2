@@ -42,3 +42,13 @@ Content-Type: application/json
 ### Удалить материал (admin)
 DELETE {{baseUrl}}/materials/{{createMaterial.response.body.data.id}}
 Authorization: Bearer {{loginAdmin.response.body.data.accessToken}}
+
+### Обновить access-токен по refresh-cookie (cookie сохраняется после логина)
+POST {{baseUrl}}/auth/refresh
+
+### Выход
+POST {{baseUrl}}/auth/logout
+
+### Журнал аудита (admin)
+GET {{baseUrl}}/admin/audit-log
+Authorization: Bearer {{loginAdmin.response.body.data.accessToken}}

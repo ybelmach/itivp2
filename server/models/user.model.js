@@ -1,7 +1,11 @@
 const { DataTypes } = require('sequelize');
 const sequelize = require('../config/db');
 
-const ROLES = ['user', 'admin'];
+// Роли по возрастанию прав
+const ROLES = ['user', 'moderator', 'admin'];
+
+// Служебные поля, которые никогда не попадают в ответы API
+const SECRET_FIELDS = ['passwordHash', 'refreshTokenHash', 'refreshTokenExpiresAt', 'failedLoginAttempts', 'lockUntil'];
 
 const User = sequelize.define('User', {
   email: {
@@ -19,17 +23,39 @@ const User = sequelize.define('User', {
     allowNull: false,
     defaultValue: 'user',
   },
+  // Ограничение попыток входа: счётчик неудач подряд и время окончания блокировки
+  failedLoginAttempts: {
+    type: DataTypes.INTEGER,
+    allowNull: false,
+    defaultValue: 0,
+  },
+  lockUntil: {
+    type: DataTypes.DATE,
+    allowNull: true,
+  },
+  // Refresh-токен хранится только в виде SHA-256 хеша
+  refreshTokenHash: {
+    type: DataTypes.STRING(64),
+    allowNull: true,
+    unique: true,
+  },
+  refreshTokenExpiresAt: {
+    type: DataTypes.DATE,
+    allowNull: true,
+  },
 }, {
   tableName: 'users',
   defaultScope: {
-    // Хеш пароля никогда не попадает в ответы API
-    attributes: { exclude: ['passwordHash'] },
+    attributes: { exclude: SECRET_FIELDS },
   },
   scopes: {
-    withPassword: { attributes: { include: ['passwordHash'] } },
+    withSecrets: { attributes: { include: SECRET_FIELDS } },
   },
 });
 
 User.ROLES = ROLES;
+
+// Есть ли у роли права не ниже требуемой
+User.hasRoleAtLeast = (role, required) => ROLES.indexOf(role) >= ROLES.indexOf(required);
 
 module.exports = User;

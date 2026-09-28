@@ -8,9 +8,11 @@ async function seed() {
   await sequelize.sync({ force: true });
 
   const passwordHash = await bcrypt.hash(PASSWORD, 12);
-  const [admin, user] = await User.bulkCreate([
+  const [admin, , user] = await User.bulkCreate([
     { email: 'admin@example.com', passwordHash, role: 'admin' },
+    { email: 'moderator@example.com', passwordHash, role: 'moderator' },
     { email: 'user@example.com', passwordHash, role: 'user' },
+    { email: 'user2@example.com', passwordHash, role: 'user' },
   ]);
 
   await Material.bulkCreate([
@@ -46,7 +48,7 @@ async function seed() {
     },
   ]);
 
-  console.log(`Готово. Пользователи admin@example.com и user@example.com, пароль ${PASSWORD}`);
+  console.log(`Готово. Пользователи admin@, moderator@, user@, user2@example.com, пароль ${PASSWORD}`);
 }
 
 seed()

@@ -1,6 +1,8 @@
 const { Op, fn, col } = require('sequelize');
 const { Material, User } = require('../models');
 const HttpError = require('../utils/HttpError');
+const { logSecurityEvent } = require('../utils/logger');
+const { MATERIAL_FIELDS } = require('../validators/material.validators');
 
 const withOwner = { model: User, as: 'owner', attributes: ['id', 'email'] };
 
@@ -59,21 +61,29 @@ async function getById(req, res) {
 
 // POST /api/materials
 async function create(req, res) {
-  const material = await Material.create({ ...req.body, ownerId: req.user.id });
+  // fields — белый список столбцов: даже если в req.body окажется лишнее поле,
+  // Sequelize его не запишет (защита от mass assignment)
+  const material = await Material.create(
+    { ...req.body, ownerId: req.user.id },
+    { fields: [...MATERIAL_FIELDS, 'ownerId'] },
+  );
   const created = await findMaterialOr404(material.id);
   res.status(201).location(`/api/materials/${material.id}`).json({ data: created });
 }
 
-// PUT /api/materials/:id — автор записи или администратор
+// PUT /api/materials/:id — автор записи, модератор или администратор
 async function update(req, res) {
   const material = await findMaterialOr404(req.params.id);
 
   const isOwner = material.ownerId === req.user.id;
-  if (!isOwner && req.user.role !== 'admin') {
-    throw HttpError.forbidden('Редактировать материал может только его автор или администратор');
+  if (!isOwner && !User.hasRoleAtLeast(req.user.role, 'moderator')) {
+    logSecurityEvent('access_denied_not_owner', req, { materialId: material.id, ownerId: material.ownerId });
+    throw HttpError.forbidden('Редактировать материал может только его автор, модератор или администратор');
   }
 
-  await material.update(req.body);
+  const changed = MATERIAL_FIELDS.filter((f) => JSON.stringify(material[f]) !== JSON.stringify(req.body[f]));
+  await material.update(req.body, { fields: MATERIAL_FIELDS });
+  res.locals.audit = { action: 'material.update', details: { ownerId: material.ownerId, changed } };
   res.status(200).json({ data: await findMaterialOr404(material.id) });
 }
 
@@ -81,6 +91,7 @@ async function update(req, res) {
 async function remove(req, res) {
   const material = await findMaterialOr404(req.params.id);
   await material.destroy();
+  res.locals.audit = { action: 'material.delete', details: { title: material.title, ownerId: material.ownerId } };
   res.status(204).end();
 }
 

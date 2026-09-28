@@ -2,6 +2,8 @@ const jwt = require('jsonwebtoken');
 const { jwtSecret } = require('../config/env');
 const { User } = require('../models');
 const HttpError = require('../utils/HttpError');
+const { logSecurityEvent } = require('../utils/logger');
+const { trackPrivilegedActions } = require('../utils/audit');
 
 // Проверяет заголовок Authorization: Bearer <token> и кладёт пользователя в req.user
 async function authenticate(req, res, next) {
@@ -13,28 +15,35 @@ async function authenticate(req, res, next) {
 
   let payload;
   try {
-    payload = jwt.verify(token, jwtSecret);
-  } catch {
+    payload = jwt.verify(token, jwtSecret, { algorithms: ['HS256'] });
+  } catch (err) {
+    // Истёкший токен — обычная ситуация, поддельный — подозрительная
+    if (err.name !== 'TokenExpiredError') {
+      logSecurityEvent('invalid_token', req, { reason: err.message });
+    }
     throw HttpError.unauthorized('Токен недействителен или истёк');
   }
 
-  // Пользователь мог быть удалён или его роль изменена после выдачи токена
+  // Пользователь мог быть удалён или его роль изменена после выдачи токена,
+  // поэтому роль всегда берётся из БД, а не из токена
   const user = await User.findByPk(payload.sub);
   if (!user) {
     throw HttpError.unauthorized('Токен недействителен или истёк');
   }
   req.user = user;
+  trackPrivilegedActions(req, res);
   next();
 }
 
-// Пропускает только пользователей с одной из перечисленных ролей
-function requireRole(...roles) {
+// Пропускает пользователей с ролью не ниже requiredRole (user < moderator < admin)
+function roleGuard(requiredRole) {
   return (req, res, next) => {
-    if (!roles.includes(req.user.role)) {
+    if (!User.hasRoleAtLeast(req.user.role, requiredRole)) {
+      logSecurityEvent('access_denied_role', req, { role: req.user.role, requiredRole });
       throw HttpError.forbidden();
     }
     next();
   };
 }
 
-module.exports = { authenticate, requireRole };
+module.exports = { authenticate, roleGuard };
