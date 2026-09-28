@@ -10,8 +10,20 @@ class HttpError extends Error {
     return new HttpError(400, message, details);
   }
 
+  static unauthorized(message = 'Требуется аутентификация') {
+    return new HttpError(401, message);
+  }
+
+  static forbidden(message = 'Недостаточно прав') {
+    return new HttpError(403, message);
+  }
+
   static notFound(message) {
     return new HttpError(404, message);
+  }
+
+  static conflict(message) {
+    return new HttpError(409, message);
   }
 }
 

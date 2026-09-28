@@ -1,10 +1,21 @@
 const express = require('express');
+const helmet = require('helmet');
+const cors = require('cors');
+const rateLimit = require('express-rate-limit');
 
+const authRouter = require('./routes/auth.routes');
 const materialsRouter = require('./routes/materials.routes');
 const notFound = require('./middleware/notFound');
 const errorHandler = require('./middleware/errorHandler');
 
 const app = express();
+
+// Заголовки безопасности
+app.use(helmet());
+// CORS для будущего React-клиента
+app.use(cors());
+// Не более 100 запросов за 15 минут с одного IP
+app.use(rateLimit({ windowMs: 15 * 60 * 1000, limit: 100, standardHeaders: 'draft-7', legacyHeaders: false }));
 
 // Парсинг тела запроса в форматах JSON и URL-encoded
 app.use(express.json());
@@ -23,16 +34,11 @@ app.get('/', (req, res) => {
   res.json({
     name: 'Study Materials API',
     description: 'Платформа для обмена учебными материалами (лекции, презентации, книги)',
-    endpoints: {
-      list: 'GET /api/materials',
-      getOne: 'GET /api/materials/:id',
-      create: 'POST /api/materials',
-      update: 'PUT /api/materials/:id',
-      remove: 'DELETE /api/materials/:id',
-    },
+    docs: 'см. API.md',
   });
 });
 
+app.use('/api/auth', authRouter);
 app.use('/api/materials', materialsRouter);
 
 // 404 для неизвестных маршрутов
