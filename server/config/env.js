@@ -12,4 +12,7 @@ module.exports = {
   databaseUrl: process.env.DATABASE_URL,
   jwtSecret: process.env.JWT_SECRET,
   jwtExpiresIn: process.env.JWT_EXPIRES_IN || '1h',
+  // Адреса фронтенда, которым разрешены запросы из браузера (через запятую)
+  corsOrigins: (process.env.CORS_ORIGINS || 'http://localhost:5173')
+    .split(',').map((s) => s.trim()).filter(Boolean),
 };

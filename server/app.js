@@ -2,6 +2,7 @@ const express = require('express');
 const helmet = require('helmet');
 const cors = require('cors');
 const rateLimit = require('express-rate-limit');
+const { corsOrigins } = require('./config/env');
 
 const authRouter = require('./routes/auth.routes');
 const materialsRouter = require('./routes/materials.routes');
@@ -12,8 +13,8 @@ const app = express();
 
 // Заголовки безопасности
 app.use(helmet());
-// CORS для будущего React-клиента
-app.use(cors());
+// CORS: браузер пропустит ответы только для адресов фронтенда из CORS_ORIGINS
+app.use(cors({ origin: corsOrigins }));
 // Не более 100 запросов за 15 минут с одного IP
 app.use(rateLimit({ windowMs: 15 * 60 * 1000, limit: 100, standardHeaders: 'draft-7', legacyHeaders: false }));
 
