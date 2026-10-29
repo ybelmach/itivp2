@@ -1,4 +1,11 @@
 node_modules/
 .env
+.env.local
+.env.*.local
+!.env.example
 .DS_Store
 logs/
+dist/
+coverage/
+.vercel/
+deploy/.env

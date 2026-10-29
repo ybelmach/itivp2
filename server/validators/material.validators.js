@@ -27,7 +27,11 @@ const listQuerySchema = Joi.object({
   type: Joi.string().valid(...Material.TYPES),
   subject: Joi.string().trim().max(255),
   search: Joi.string().trim().max(100),
+  ownerId: Joi.number().integer().min(1),
   sort: Joi.string().valid('createdAt', '-createdAt', 'title', '-title').default('-createdAt'),
+  // Пагинация необязательна: без limit возвращается весь список
+  page: Joi.number().integer().min(1).default(1),
+  limit: Joi.number().integer().min(1).max(100),
 });
 
 module.exports = { idParamSchema, materialBodySchema, listQuerySchema, MATERIAL_FIELDS: Object.keys(materialBodySchema.describe().keys) };

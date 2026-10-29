@@ -8,7 +8,7 @@ Node.js + Express.js, PostgreSQL + Sequelize, аутентификация по 
 
 ## Запуск
 
-Нужны Node.js 20+ и Docker (или свой PostgreSQL).
+Нужны Node.js 22+ и Docker (или свой PostgreSQL).
 
 ```bash
 cd server
@@ -49,7 +49,26 @@ npm run dev             # http://localhost:3000
 | Журнал аудита действий администратора и модератора | `utils/audit.js`, `GET /api/admin/audit-log` |
 | Ответы об ошибках без деталей реализации | `middleware/errorHandler.js` |
 
+## Мониторинг и логи
+
+| Что | Где в коде |
+|---|---|
+| `GET /health` (сервер + БД, 200/503) и `GET /metrics` (uptime, память, CPU, счётчики запросов) | `routes/monitoring.routes.js`, `utils/metrics.js` |
+| Sentry: необработанные исключения, без cookie, заголовков авторизации и тел запросов | `instrument.js`, `app.js` |
+| Логи winston: JSON в продакшене, отправка в Better Stack при заданном `BETTERSTACK_SOURCE_TOKEN` | `utils/logger.js` |
+| Маскировка паролей, токенов, cookie и хешей в логах | `utils/logger.js` (`redact`) |
+| Ошибки уровня `error` → Telegram (не чаще раза в минуту на одинаковое сообщение) | `utils/logger.js`, `utils/telegram.js` |
+| Корректное завершение по SIGTERM, перехват `unhandledRejection` / `uncaughtException` | `server.js` |
+| Тестовая ошибка для Sentry: `GET /api/debug/error` (только admin) | `routes/monitoring.routes.js` |
+
 ## Тестирование
+
+- `npm run lint` — ESLint.
+- `npm test` — Jest + supertest, 26 тестов (auth, материалы, пагинация, избранное, мониторинг, маскировка логов).
+  Нужна пустая тестовая БД: по умолчанию `postgres://study:study@localhost:5432/study_materials_test`,
+  другую можно задать через `TEST_DATABASE_URL`. Быстро поднять:
+  `docker run -d --rm -p 55432:5432 -e POSTGRES_USER=study -e POSTGRES_PASSWORD=study -e POSTGRES_DB=study_materials_test postgres:17-alpine`
+  и запускать `TEST_DATABASE_URL=postgres://study:study@localhost:55432/study_materials_test npm test`.
 
 - `postman_collection.json` — импортировать в Postman и запустить целиком через Collection Runner. Перед запуском перезапустить сервер и выполнить `npm run seed`: так сбрасываются счётчики rate limit и блокировки входа. Запросы логина сохраняют токены в переменные коллекции.
 - `node scripts/rate-limit-demo.js` — 25 запросов на вход подряд; после 20-го сервер отвечает `429`. Лучше запускать на только что перезапущенном сервере.
@@ -62,12 +81,15 @@ server/
 ├── server.js              # подключение к БД и запуск сервера
 ├── app.js                 # helmet, CORS, rate limit, лимит тела, маршруты, обработчики ошибок
 ├── config/                # переменные окружения, подключение Sequelize
-├── models/                # User, Material, AuditLog
+├── instrument.js          # инициализация Sentry (подключается первой)
+├── Dockerfile             # образ для деплоя на VM
+├── models/                # User, Material, AuditLog, Favorite
 ├── validators/            # Joi-схемы входных данных
 ├── middleware/            # validate, authenticate / roleGuard, 404, обработчик ошибок
 ├── controllers/           # обработчики запросов
-├── routes/                # /api/auth, /api/materials, /api/users, /api/admin
+├── routes/                # /api/auth, /api/materials, /api/favorites, /api/users, /api/admin, /health, /metrics
 ├── scripts/               # seed.js — тестовые данные, rate-limit-demo.js
-├── utils/                 # HttpError, журнал безопасности, аудит, санитизация
+├── tests/                 # Jest + supertest
+├── utils/                 # HttpError, логгер, метрики, Telegram, аудит, санитизация
 └── logs/security.log      # создаётся при работе, не коммитится
 ```

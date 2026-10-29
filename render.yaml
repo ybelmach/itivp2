@@ -1,0 +1,40 @@
+# Render Blueprint: бэкенд как Web Service (бесплатный тариф).
+# Автодеплой отключён — деплой запускает GitHub Actions через Deploy Hook после линтинга и тестов.
+services:
+  - type: web
+    name: study-materials-api
+    runtime: node
+    plan: free
+    region: frankfurt
+    rootDir: server
+    buildCommand: npm ci --omit=dev
+    startCommand: node server.js
+    healthCheckPath: /health
+    autoDeploy: false
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: NODE_VERSION
+        value: "22"
+      - key: TRUST_PROXY
+        value: "2"
+      - key: LOG_LEVEL
+        value: http
+      - key: DATABASE_SSL
+        value: "true"
+      - key: JWT_SECRET
+        generateValue: true
+      - key: DATABASE_URL
+        sync: false
+      - key: CORS_ORIGINS
+        sync: false
+      - key: SENTRY_DSN
+        sync: false
+      - key: BETTERSTACK_SOURCE_TOKEN
+        sync: false
+      - key: BETTERSTACK_INGESTING_HOST
+        sync: false
+      - key: TELEGRAM_BOT_TOKEN
+        sync: false
+      - key: TELEGRAM_CHAT_ID
+        sync: false

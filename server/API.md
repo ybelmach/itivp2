@@ -121,9 +121,13 @@ HTML-теги в текстовых полях (`title`, `subject`, `author`, `d
 - `type` — `lecture` | `presentation` | `book`;
 - `subject` — предмет, без учёта регистра;
 - `search` — подстрока в названии, описании, авторе или точное совпадение тега;
-- `sort` — `createdAt`, `-createdAt` (по умолчанию), `title`, `-title`.
+- `ownerId` — материалы конкретного пользователя;
+- `sort` — `createdAt`, `-createdAt` (по умолчанию), `title`, `-title`;
+- `page`, `limit` — пагинация: `limit` от 1 до 100, `page` с 1. Без `limit` возвращается весь список.
 
-Ответ: `{ "count": 2, "data": [ ... ] }`
+Ответ без пагинации: `{ "count": 2, "total": 2, "data": [ ... ] }`
+
+Ответ с `?limit=5&page=2`: `{ "count": 5, "total": 15, "page": 2, "limit": 5, "pages": 3, "data": [ ... ] }`
 
 ### GET /materials/stats
 
@@ -146,6 +150,17 @@ HTML-теги в текстовых полях (`title`, `subject`, `author`, `d
 ```
 
 `PUT` — полная замена: передаются все обязательные поля. Ответ `201` содержит заголовок `Location`.
+
+## Избранное
+
+| Метод | URL | Доступ | Успех | Ошибки |
+|---|---|---|---|---|
+| GET | `/favorites` | вошедший пользователь | 200 | 401 |
+| PUT | `/materials/:id/favorite` | вошедший пользователь | 204 | 400, 401, 404 |
+| DELETE | `/materials/:id/favorite` | вошедший пользователь | 204 | 400, 401 |
+
+`PUT` идемпотентен: повторное добавление ничего не меняет. `GET /favorites` возвращает материалы
+(как в `/materials`) с полем `favoritedAt`, новые сверху. Записи избранного удаляются вместе с материалом или пользователем.
 
 ## Пользователи
 
@@ -187,3 +202,36 @@ HTML-теги в текстовых полях (`title`, `subject`, `author`, `d
 | `access_denied_not_owner` | попытка изменить чужой материал |
 | `rate_limit_exceeded`, `auth_rate_limit_exceeded` | превышен лимит запросов |
 | `cors_origin_rejected` | запрос с домена не из белого списка |
+
+## Мониторинг
+
+Эти маршруты доступны и в корне (`/health`), и под `/api` (`/api/health`) — второй путь нужен,
+когда API открывается через прокси фронтенда. На них не действует общий rate limit.
+
+### GET /health
+
+`200`, если сервер и БД работают, иначе `503`. Используется UptimeRobot и health-check платформы.
+
+```json
+{ "status": "ok", "uptimeSeconds": 3600, "release": "9fc0e0e…", "checks": { "database": { "status": "up", "latencyMs": 2 } }, "timestamp": "…" }
+```
+
+### GET /metrics
+
+Метрики процесса для страницы «Статус» во фронтенде:
+
+| Поле | Что это |
+|---|---|
+| `uptimeSeconds`, `startedAt` | время работы процесса |
+| `process.memory` | `rssMb`, `heapUsedMb`, `heapTotalMb`, `externalMb` (из `process.memoryUsage()`) |
+| `process.cpuPercent` | загрузка CPU процессом за последние 10 секунд, % от одного ядра |
+| `system` | число ядер, load average, свободная память |
+| `requests.total`, `inFlight` | обработано запросов с запуска и выполняется сейчас |
+| `requests.byStatus`, `byMethod`, `topRoutes` | счётчики по классам кодов, методам и шаблонам маршрутов |
+| `requests.responseTime` | среднее и p95 по последним 500 запросам, мс |
+| `history` | точки `{ t, rssMb, heapUsedMb, cpuPercent }` раз в 10 секунд за последние 10 минут |
+
+### GET /api/debug/error 🔒 admin
+
+Намеренно выбрасывает исключение, чтобы проверить Sentry и алерты в Telegram. Клиент получает
+обычный ответ `500` без деталей.

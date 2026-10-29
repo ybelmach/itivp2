@@ -1,7 +1,7 @@
 const { UniqueConstraintError, ValidationError } = require('sequelize');
+const { logger, requestContext } = require('../utils/logger');
 
 // Глобальный обработчик ошибок. Express распознаёт его по четырём аргументам.
-// eslint-disable-next-line no-unused-vars
 function errorHandler(err, req, res, next) {
   let status = err.status || err.statusCode || 500;
   let message = err.message;
@@ -30,7 +30,8 @@ function errorHandler(err, req, res, next) {
   // Детали внутренних ошибок пишутся в лог, но не отдаются клиенту:
   // ни текст исключения, ни стек, ни SQL
   if (status >= 500) {
-    console.error(err);
+    // В лог (и далее в Better Stack и Telegram) — с контекстом запроса, но без тела и заголовков
+    logger.error('unhandled_error', { error: err, ...requestContext(req) });
     message = 'Внутренняя ошибка сервера';
     details = undefined;
   }

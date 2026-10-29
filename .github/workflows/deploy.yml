@@ -1,0 +1,182 @@
+name: CI/CD
+
+# Пайплайн запускается при push в main или в ветку работы, при pull request в main и вручную
+on:
+  push:
+    branches: [main, ipr22, ipr2]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-${{ github.ref }}
+  cancel-in-progress: false
+
+env:
+  NODE_VERSION: 22
+
+jobs:
+  server:
+    name: Backend — lint и тесты
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: server
+    # Тесты работают с настоящим PostgreSQL в сервис-контейнере
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_USER: study
+          POSTGRES_PASSWORD: study
+          POSTGRES_DB: study_materials_test
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U study"
+          --health-interval 5s --health-timeout 5s --health-retries 10
+    env:
+      TEST_DATABASE_URL: postgres://study:study@localhost:5432/study_materials_test
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+          cache-dependency-path: server/package-lock.json
+      - run: npm ci
+      - run: npm run lint
+      - run: npm test
+
+  client:
+    name: Frontend — lint, тесты, сборка
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: client
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+          cache-dependency-path: client/package-lock.json
+      - run: npm ci
+      - run: npm run lint
+      - run: npm test
+      - run: npm run build
+
+  docker:
+    name: Сборка Docker-образов
+    runs-on: ubuntu-latest
+    needs: [server, client]
+    steps:
+      - uses: actions/checkout@v4
+      - run: docker build -t study-materials-api:${{ github.sha }} server
+      - run: docker build -t study-materials-web:${{ github.sha }} client
+
+  deploy:
+    name: Деплой
+    runs-on: ubuntu-latest
+    needs: [server, client, docker]
+    # Деплоим только push-события (не pull request)
+    if: github.event_name != 'pull_request'
+    environment: production
+    env:
+      RENDER_DEPLOY_HOOK_URL: ${{ secrets.RENDER_DEPLOY_HOOK_URL }}
+      BACKEND_URL: ${{ vars.BACKEND_URL }}
+      VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+      VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+      VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+      SSH_HOST: ${{ secrets.SSH_HOST }}
+    outputs:
+      frontend_url: ${{ steps.vercel.outputs.url }}
+    steps:
+      - uses: actions/checkout@v4
+
+      # Вариант 1: Render (бэкенд) + Vercel (фронтенд)
+      - name: Backend → Render (Deploy Hook)
+        if: env.RENDER_DEPLOY_HOOK_URL != ''
+        run: curl -fsS -X POST "$RENDER_DEPLOY_HOOK_URL" > /dev/null
+
+      - name: Ожидание новой версии бэкенда
+        if: env.RENDER_DEPLOY_HOOK_URL != '' && env.BACKEND_URL != ''
+        run: |
+          # Render собирает и перезапускает сервис несколько минут; ждём, пока /health вернёт новый release
+          for i in $(seq 1 60); do
+            release=$(curl -fsS "$BACKEND_URL/health" | jq -r .release || true)
+            echo "attempt $i: release=$release"
+            if [ "$release" = "$GITHUB_SHA" ]; then exit 0; fi
+            sleep 10
+          done
+          echo "Новая версия не поднялась за 10 минут" && exit 1
+
+      - uses: actions/setup-node@v4
+        if: env.VERCEL_TOKEN != ''
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Frontend → Vercel
+        id: vercel
+        if: env.VERCEL_TOKEN != ''
+        working-directory: client
+        env:
+          VITE_APP_RELEASE: ${{ github.sha }}
+          SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
+          SENTRY_ORG: ${{ vars.SENTRY_ORG }}
+          SENTRY_PROJECT: ${{ vars.SENTRY_PROJECT_FRONTEND }}
+        run: |
+          npx --yes vercel@latest pull --yes --environment=production --token="$VERCEL_TOKEN"
+          npx --yes vercel@latest build --prod --token="$VERCEL_TOKEN"
+          url=$(npx --yes vercel@latest deploy --prebuilt --prod --token="$VERCEL_TOKEN")
+          echo "url=$url" >> "$GITHUB_OUTPUT"
+
+      # Вариант 2: собственная виртуальная машина (docker compose по SSH)
+      - name: Деплой на VM по SSH
+        if: env.SSH_HOST != ''
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          port: ${{ secrets.SSH_PORT || 22 }}
+          script: ${{ vars.VM_APP_DIR || '~/itivp2_labs' }}/deploy/deploy.sh ${{ github.ref_name }} ${{ github.sha }}
+
+  notify:
+    name: Уведомление в Telegram
+    runs-on: ubuntu-latest
+    needs: [server, client, docker, deploy]
+    if: always()
+    env:
+      TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+      TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+    steps:
+      - name: Отправка статуса сборки
+        if: env.TELEGRAM_BOT_TOKEN != ''
+        env:
+          SERVER: ${{ needs.server.result }}
+          CLIENT: ${{ needs.client.result }}
+          DOCKER: ${{ needs.docker.result }}
+          DEPLOY: ${{ needs.deploy.result }}
+          COMMIT_MSG: ${{ github.event.head_commit.message || github.event.pull_request.title || 'manual run' }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          icon() { case "$1" in success) echo "✅";; skipped) echo "⏭";; cancelled) echo "⚪️";; *) echo "❌";; esac; }
+          if [ "$SERVER$CLIENT$DOCKER" = "successsuccesssuccess" ] && { [ "$DEPLOY" = success ] || [ "$DEPLOY" = skipped ]; }; then
+            title="✅ Сборка прошла успешно"
+          else
+            title="❌ Сборка упала"
+          fi
+          text="$title
+          ${GITHUB_REPOSITORY} @ ${GITHUB_REF_NAME} (${GITHUB_SHA::7})
+          $(echo "$COMMIT_MSG" | head -n1)
+
+          $(icon "$SERVER") backend: lint + tests
+          $(icon "$CLIENT") frontend: lint + tests + build
+          $(icon "$DOCKER") docker images
+          $(icon "$DEPLOY") deploy: $DEPLOY
+
+          $RUN_URL"
+          curl -fsS -X POST "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage" \
+            --data-urlencode "chat_id=${TELEGRAM_CHAT_ID}" \
+            --data-urlencode "text=${text}" \
+            -d disable_web_page_preview=true > /dev/null

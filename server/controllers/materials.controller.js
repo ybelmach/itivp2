@@ -14,12 +14,15 @@ async function findMaterialOr404(id) {
   return material;
 }
 
-// GET /api/materials?type=&subject=&search=&sort=
+// GET /api/materials?type=&subject=&search=&ownerId=&sort=&page=&limit=
 async function getAll(req, res) {
-  const { type, subject, search, sort } = req.validatedQuery;
+  const {
+    type, subject, search, ownerId, sort, page, limit,
+  } = req.validatedQuery;
 
   const where = {};
   if (type) where.type = type;
+  if (ownerId) where.ownerId = ownerId;
   if (subject) where.subject = { [Op.iLike]: subject };
   if (search) {
     const pattern = `%${search}%`;
@@ -34,8 +37,21 @@ async function getAll(req, res) {
   const field = sort.replace('-', '');
   const direction = sort.startsWith('-') ? 'DESC' : 'ASC';
 
-  const materials = await Material.findAll({ where, include: withOwner, order: [[field, direction]] });
-  res.status(200).json({ count: materials.length, data: materials });
+  // Второй ключ сортировки по id делает порядок стабильным между страницами
+  const order = [[field, direction], ['id', direction]];
+
+  if (!limit) {
+    const materials = await Material.findAll({ where, include: withOwner, order });
+    res.status(200).json({ count: materials.length, total: materials.length, data: materials });
+    return;
+  }
+
+  const { rows, count: total } = await Material.findAndCountAll({
+    where, include: withOwner, order, limit, offset: (page - 1) * limit, distinct: true,
+  });
+  res.status(200).json({
+    count: rows.length, total, page, limit, pages: Math.ceil(total / limit), data: rows,
+  });
 }
 
 // GET /api/materials/stats — количество материалов по типам
