@@ -1,5 +1,7 @@
 # Продакшен на собственной виртуальной машине: PostgreSQL + API + nginx со статикой + Caddy (HTTPS).
 # Запуск: cd deploy && cp .env.example .env && docker compose up -d --build
+# Варианты: своя VM (COMPOSE_PROFILES=standalone) или сервер с общим Caddy
+# (COMPOSE_FILE=docker-compose.yml:docker-compose.proxy.yml), см. .env.example
 services:
   db:
     image: ${POSTGRES_IMAGE:-postgres:17-alpine}
@@ -44,8 +46,11 @@ services:
     depends_on:
       - api
 
-  # Caddy сам получает и продлевает сертификат Let's Encrypt для DOMAIN
+  # Caddy сам получает и продлевает сертификат Let's Encrypt для DOMAIN.
+  # Запускается только с профилем standalone (COMPOSE_PROFILES=standalone) — на чистой VM.
+  # Если на сервере уже есть общий Caddy, используется docker-compose.proxy.yml.
   caddy:
+    profiles: [standalone]
     image: ${CADDY_IMAGE:-caddy:2-alpine}
     restart: unless-stopped
     ports:

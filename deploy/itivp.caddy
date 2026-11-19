@@ -1,0 +1,6 @@
+# Блок сайта для общего Caddy на SSH-ноде (/srv/infrastructure/caddy/conf.d/itivp.caddy).
+# sslip.io резолвит имя в IP из самого имени, поэтому DNS-запись не нужна; сертификат Let's Encrypt Caddy получает сам.
+itivp.167.86.121.175.sslip.io {
+	encode zstd gzip
+	reverse_proxy itivp-web:80
+}
