@@ -1,6 +1,6 @@
 # Вариант для сервера, где порты 80/443 уже занимает общий Caddy (SSH-нода).
 # Контейнер web подключается к внешней сети proxy, Caddy находит его по имени itivp-web:
-#   itivp.167.86.121.175.sslip.io { reverse_proxy itivp-web:80 }
+#   itivp.ybelmach.ru { reverse_proxy itivp-web:80 }
 # Подключается через COMPOSE_FILE=docker-compose.yml:docker-compose.proxy.yml в deploy/.env
 services:
   web:
