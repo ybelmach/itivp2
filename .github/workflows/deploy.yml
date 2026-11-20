@@ -3,7 +3,7 @@ name: CI/CD
 # Пайплайн запускается при push в main или в ветку работы, при pull request в main и вручную
 on:
   push:
-    branches: [main, ipr22, ipr2]
+    branches: [main, ipr22, ipr2, kr22]
   pull_request:
     branches: [main]
   workflow_dispatch:
