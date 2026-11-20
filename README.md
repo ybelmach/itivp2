@@ -12,14 +12,14 @@
 
 | Что | Где |
 |---|---|
-| Приложение (frontend) | _TODO: https://…_ |
-| API (backend) | _TODO: https://…/health_ |
-| Метрики сервера | _TODO: https://…/status_ |
-| Мониторинг uptime (UptimeRobot) | _TODO: публичная статус-страница_ |
-| Ошибки (Sentry) | _TODO: ссылка на проект_ |
-| Логи (Better Stack) | _TODO: ссылка на источник_ |
+| Приложение (frontend) | [https://itivp.ybelmach.ru](https://itivp.ybelmach.ru) |
+| API (backend) | [https://itivp.ybelmach.ru/health](https://itivp.ybelmach.ru/health) |
+| Метрики сервера | [https://itivp.ybelmach.ru/status](https://itivp.ybelmach.ru/status) |
+| Мониторинг uptime (UptimeRobot) | _ссылка на публичную статус-страницу добавляется после публикации монитора_ |
+| Ошибки (Sentry) | _ссылка на проект добавляется после создания проекта Sentry_ |
+| Логи | Winston JSON в stdout контейнера Docker |
 | CI/CD | [GitHub Actions](../../actions/workflows/deploy.yml) |
-| Уведомления | _TODO: Telegram-бот @… / чат_ |
+| Уведомления | E-mail-оповещения UptimeRobot о недоступности мониторов |
 
 Тестовые пользователи (после `npm run seed`, пароль `Password123!`): `admin@example.com`, `moderator@example.com`, `user@example.com`.
 
